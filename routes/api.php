@@ -2,15 +2,25 @@
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CompanyRegistrationController;
 use Illuminate\Support\Facades\Route;
 
 
-// current logged in user
+// ====== COMPANY REGISTRATION ======
+Route::post('/register-company', [CompanyRegistrationController::class, 'register']);
+Route::post('/verify-email', [CompanyRegistrationController::class, 'verifyEmail']);
+Route::post('/resend-verification-email', [CompanyRegistrationController::class, 'resendVerificationEmail']);
+Route::get('/subscription-plans', [CompanyRegistrationController::class, 'getSubscriptionPlans']);
+
+// ====== AUTHENTICATION ======
+Route::post('/login', [AuthController::class, 'login']);
+Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
+Route::get('/roles', [AuthController::class, 'getRoles']);
+
+// ====== PROTECTED ROUTES ======
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
 
-Route::post('/login', [AuthController::class, 'login']);
 
-Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);

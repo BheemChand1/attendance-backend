@@ -21,7 +21,6 @@ class User extends Authenticatable
         'company_id',
         'role_id',
         'phone',
-        'employee_code',
         'is_active',
     ];
 
@@ -62,6 +61,12 @@ class User extends Authenticatable
     public function attendances()
     {
         return $this->hasMany(Attendance::class);
+    }
+
+
+    public function employeeProfile()
+    {
+        return $this->hasOne(EmployeeProfile::class);
     }
 
     /* ============================

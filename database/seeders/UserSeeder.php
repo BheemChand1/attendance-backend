@@ -6,7 +6,10 @@ use Illuminate\Database\Seeder;
 use App\Models\User;
 use App\Models\Company;
 use App\Models\Role;
+use App\Models\Subscription;
+use App\Models\CompanySubscription;
 use Illuminate\Support\Facades\Hash;
+use Carbon\Carbon;
 
 class UserSeeder extends Seeder
 {
@@ -16,6 +19,11 @@ class UserSeeder extends Seeder
         $companyAdminRole = Role::where('slug', 'company_admin')->first();
         $hrRole = Role::where('slug', 'hr')->first();
         $employeeRole = Role::where('slug', 'employee')->first();
+
+        // Get subscription plans
+        $basicSubscription = Subscription::where('name', 'Basic')->first();
+        $professionalSubscription = Subscription::where('name', 'Professional')->first();
+        $enterpriseSubscription = Subscription::where('name', 'Enterprise')->first();
 
         // 🔑 Super Admin
         User::create([
@@ -27,7 +35,27 @@ class UserSeeder extends Seeder
         ]);
 
         // Loop companies
-        Company::all()->each(function ($company) use ($companyAdminRole, $hrRole, $employeeRole) {
+        Company::all()->each(function ($company, $index) use ($companyAdminRole, $hrRole, $employeeRole, $basicSubscription, $professionalSubscription, $enterpriseSubscription) {
+
+            // Assign subscription based on company index
+            $subscription = match ($index) {
+                0 => $basicSubscription,
+                1 => $professionalSubscription,
+                default => $enterpriseSubscription,
+            };
+
+            // Create company subscription
+            CompanySubscription::create([
+                'company_id' => $company->id,
+                'subscription_id' => $subscription->id,
+                'start_date' => Carbon::today(),
+                'end_date' => Carbon::today()->addMonths(12),
+                'status' => 'active',
+                'price' => $subscription->price,
+                'billing_cycle' => 'monthly',
+                'next_billing_date' => Carbon::today()->addMonth(),
+                'employee_count' => 6, // 1 admin + 1 hr + 4 employees
+            ]);
 
             // 🧑‍💼 Company Admin
             $companyAdmin = User::create([
@@ -48,7 +76,7 @@ class UserSeeder extends Seeder
             ]);
 
             // 👷 Employees
-            for ($i = 1; $i <= 5; $i++) {
+            for ($i = 1; $i <= 4; $i++) {
                 User::create([
                     'name' => "Employee {$i}",
                     'email' => "emp{$i}@" . strtolower(str_replace(' ', '', $company->name)) . ".com",
@@ -62,3 +90,4 @@ class UserSeeder extends Seeder
         });
     }
 }
+

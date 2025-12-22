@@ -4,25 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Attendance extends Model
+class CompanyProfile extends Model
 {
     protected $fillable = [
-        'company_id',
         'user_id',
-        'date',
-        'check_in',
-        'check_out',
-        'status',
+        'company_id',
+        'designation',
+        'bio',
     ];
-
-    protected function casts(): array
-    {
-        return [
-            'date' => 'date',
-            'check_in' => 'datetime',
-            'check_out' => 'datetime',
-        ];
-    }
 
     // Relationships
     public function user()

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\Role;
+use App\Models\Subscription;
 use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
@@ -58,5 +60,23 @@ class AuthController extends Controller
         ]);
     }
 
+    // get roles api
+
+    public function getRoles(){
+
+        $roles = Role::all(['id','name','slug']);
+        return response()->json([
+            'roles' => $roles
+        ]);
+
+    }
+
+    // get subscription plans api
+    public function getSubscriptionPlans(){
+        $subscriptions = Subscription::with('features')->where('is_active',1)->get();
+        return response()->json([
+            'subscriptions' => $subscriptions
+        ]);
+    }
 
 }
