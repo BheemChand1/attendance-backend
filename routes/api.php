@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Route;
 
 // ====== COMPANY REGISTRATION ======
 Route::post('/register-company', [CompanyRegistrationController::class, 'register']);
-Route::post('/verify-email', [CompanyRegistrationController::class, 'verifyEmail']);
+Route::get('/verify-email', [CompanyRegistrationController::class, 'verifyEmail']);
 Route::post('/resend-verification-email', [CompanyRegistrationController::class, 'resendVerificationEmail']);
 Route::get('/subscription-plans', [CompanyRegistrationController::class, 'getSubscriptionPlans']);
 
