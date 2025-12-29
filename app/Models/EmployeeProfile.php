@@ -27,7 +27,6 @@ class EmployeeProfile extends Model
         'specialization',
         'university',
         'graduation_year',
-        'documents',
     ];
 
     protected function casts(): array
@@ -36,7 +35,6 @@ class EmployeeProfile extends Model
             'date_of_birth' => 'date',
             'joining_date' => 'date',
             'salary' => 'decimal:2',
-            'documents' => 'array',
         ];
     }
 
@@ -49,5 +47,10 @@ class EmployeeProfile extends Model
     public function company()
     {
         return $this->belongsTo(Company::class);
+    }
+
+    public function documents()
+    {
+        return $this->hasMany(EmployeeDocument::class);
     }
 }
