@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CompanyRegistrationController;
 use App\Http\Controllers\Api\EmployeeController;
+use App\Http\Controllers\Api\AttendanceController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -41,5 +42,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/employees/{userId}', [EmployeeController::class, 'delete']);
 });
 
-
-
+// ====== ATTENDANCE MANAGEMENT ======
+Route::middleware('auth:sanctum')->group(function () {
+    // Check in
+    Route::post('/attendance/check-in', [AttendanceController::class, 'checkIn']);
+    
+    // Check out
+    Route::post('/attendance/check-out', [AttendanceController::class, 'checkOut']);
+    
+    // Get today's attendance status
+    Route::get('/attendance/today', [AttendanceController::class, 'todayStatus']);
+    
+    // Get attendance history
+    Route::get('/attendance/history', [AttendanceController::class, 'history']);
+    
+    // Get company attendance (HR and Company Admin only)
+    Route::get('/attendance/company', [AttendanceController::class, 'companyAttendance']);
+});

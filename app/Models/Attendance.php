@@ -34,4 +34,19 @@ class Attendance extends Model
     {
         return $this->belongsTo(Company::class);
     }
+
+    public function photos()
+    {
+        return $this->hasMany(AttendancePhoto::class);
+    }
+
+    public function checkInPhoto()
+    {
+        return $this->hasOne(AttendancePhoto::class)->where('type', 'check_in');
+    }
+
+    public function checkOutPhoto()
+    {
+        return $this->hasOne(AttendancePhoto::class)->where('type', 'check_out');
+    }
 }
