@@ -21,8 +21,8 @@ class EmployeeController extends Controller
     {
         try {
             // Check authorization - only HR and Company Admin can create employees
-            $user = $request->user();
-            $userRole = $user->role->name ?? null;
+            $authUser = $request->user();
+            $userRole = $authUser->role->name ?? null;
 
             if (!in_array($userRole, ['Company Admin', 'HR'])) {
                 return response()->json([
@@ -68,8 +68,9 @@ class EmployeeController extends Controller
 
                 // Documents
                 'documents' => 'nullable|array',
-                'documents.*.name' => 'required_with:documents|string|max:255',
-                'documents.*.file' => 'required_with:documents|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:5120', // 5MB
+                'documents.*' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:5120', // 5MB
+                'document_names' => 'nullable|array',
+                'document_names.*' => 'nullable|string|max:255',
             ]);
 
             // Get the employee role ID
@@ -105,23 +106,24 @@ class EmployeeController extends Controller
             // Handle documents
             $documents = [];
             if ($request->hasFile('documents')) {
-                // Get the document names from the request
-                $documentNames = $request->input('documents.*.name', []);
                 $documentFiles = $request->file('documents');
+                $documentNames = $request->input('document_names', []);
 
                 foreach ($documentFiles as $index => $document) {
-                    $fileName = $document->getClientOriginalName();
-                    $docPath = $document->store(
-                        "employees/{$user->id}/documents",
-                        'public'
-                    );
+                    if ($document && $document->isValid()) {
+                        $fileName = $document->getClientOriginalName();
+                        $docPath = $document->store(
+                            "employees/{$user->id}/documents",
+                            'public'
+                        );
 
-                    $documents[] = [
-                        'name' => $documentNames[$index] ?? 'Document',
-                        'path' => $docPath,
-                        'original_name' => $fileName,
-                        'uploaded_at' => now()->toDateTimeString()
-                    ];
+                        $documents[] = [
+                            'name' => $documentNames[$index] ?? 'Document',
+                            'path' => $docPath,
+                            'original_name' => $fileName,
+                            'uploaded_at' => now()->toDateTimeString()
+                        ];
+                    }
                 }
             }
 
