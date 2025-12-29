@@ -69,8 +69,8 @@ class EmployeeController extends Controller
                 // Documents
                 'documents' => 'nullable|array',
                 'documents.*' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:5120', // 5MB
-                'document_names' => 'nullable|array',
-                'document_names.*' => 'nullable|string|max:255',
+                'documentNames' => 'nullable|array',
+                'documentNames.*' => 'nullable|string|max:255',
             ]);
 
             // Get the employee role ID
@@ -107,7 +107,7 @@ class EmployeeController extends Controller
             $documents = [];
             if ($request->hasFile('documents')) {
                 $documentFiles = $request->file('documents');
-                $documentNames = $request->input('document_names', []);
+                $documentNames = $request->input('documentNames', []);
 
                 foreach ($documentFiles as $index => $document) {
                     if ($document && $document->isValid()) {
