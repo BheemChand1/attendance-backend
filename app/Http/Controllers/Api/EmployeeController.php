@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\EmployeeProfile;
+use App\Models\EmployeeDocument;
 use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -104,10 +105,20 @@ class EmployeeController extends Controller
             }
 
             // Handle documents
-            $documents = [];
+            \Log::info('Checking for documents', [
+                'hasFile' => $request->hasFile('documents'),
+                'allFiles' => $request->allFiles(),
+                'documentNames' => $request->input('documentNames')
+            ]);
+
             if ($request->hasFile('documents')) {
                 $documentFiles = $request->file('documents');
                 $documentNames = $request->input('documentNames', []);
+
+                \Log::info('Processing documents', [
+                    'fileCount' => count($documentFiles),
+                    'nameCount' => count($documentNames)
+                ]);
 
                 foreach ($documentFiles as $index => $document) {
                     if ($document && $document->isValid()) {
@@ -117,15 +128,12 @@ class EmployeeController extends Controller
                             'public'
                         );
 
-                        $documents[] = [
-                            'name' => $documentNames[$index] ?? 'Document',
-                            'path' => $docPath,
-                            'original_name' => $fileName,
-                            'uploaded_at' => now()->toDateTimeString()
-                        ];
+                        \Log::info('Document stored', ['path' => $docPath, 'name' => $documentNames[$index] ?? 'Document']);
                     }
                 }
             }
+
+            \Log::info('Documents will be saved after profile creation');
 
             // Create Employee Profile
             $employeeProfile = EmployeeProfile::create([
@@ -155,10 +163,33 @@ class EmployeeController extends Controller
                 'specialization' => $validated['specialization'] ?? null,
                 'university' => $validated['university'] ?? null,
                 'graduation_year' => $validated['graduationYear'] ?? null,
-
-                // Documents
-                'documents' => !empty($documents) ? json_encode($documents) : null,
             ]);
+
+            // Save documents in employee_documents table
+            if ($request->hasFile('documents')) {
+                $documentFiles = $request->file('documents');
+                $documentNames = $request->input('documentNames', []);
+
+                foreach ($documentFiles as $index => $document) {
+                    if ($document && $document->isValid()) {
+                        $fileName = $document->getClientOriginalName();
+                        $docPath = $document->store(
+                            "employees/{$user->id}/documents",
+                            'public'
+                        );
+
+                        EmployeeDocument::create([
+                            'employee_profile_id' => $employeeProfile->id,
+                            'document_type' => $documentNames[$index] ?? 'Other',
+                            'document_name' => $documentNames[$index] ?? 'Document',
+                            'file_path' => $docPath,
+                            'file_size' => $document->getSize(),
+                            'mime_type' => $document->getMimeType(),
+                            'description' => 'Uploaded during onboarding',
+                        ]);
+                    }
+                }
+            }
 
             return response()->json([
                 'message' => 'Employee successfully onboarded',
@@ -169,7 +200,8 @@ class EmployeeController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                     'temporary_password' => $password, // Send via email in production
-                    'profile' => $employeeProfile
+                    'profile' => $employeeProfile,
+                    'documents' => $employeeProfile->documents // Include documents relationship
                 ]
             ], 201);
 
