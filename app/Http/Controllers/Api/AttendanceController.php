@@ -47,12 +47,12 @@ class AttendanceController extends Controller
                     'company_id' => $user->company_id,
                     'user_id' => $user->id,
                     'date' => $today,
-                    'check_in' => now()->format('H:i:s'),
+                    'check_in' => now(),
                     'status' => 'present',
                 ]);
             } else {
                 $attendance->update([
-                    'check_in' => now()->format('H:i:s'),
+                    'check_in' => now(),
                     'status' => 'present',
                 ]);
             }
@@ -114,32 +114,28 @@ class AttendanceController extends Controller
 
             DB::beginTransaction();
 
-            // Find today's attendance
+            // Find the most recent attendance that has check_in but no check_out
+            // This handles cases where checkout happens on a different day (night shifts)
             $attendance = Attendance::where('user_id', $user->id)
-                ->where('date', $today)
+                ->whereNotNull('check_in')
+                ->whereNull('check_out')
+                ->orderBy('date', 'desc')
+                ->orderBy('check_in', 'desc')
                 ->first();
 
-            if (!$attendance || !$attendance->check_in) {
+            if (!$attendance) {
                 return response()->json([
-                    'message' => 'Please check in first',
+                    'message' => 'No active check-in found. Please check in first.',
                     'status' => false
                 ], 422);
             }
 
-            if ($attendance->check_out) {
-                return response()->json([
-                    'message' => 'Already checked out today',
-                    'status' => false,
-                    'data' => $attendance
-                ], 422);
-            }
-
-            // Update check out time
+            // Update check out time with current date and time
             $attendance->update([
-                'check_out' => now()->format('H:i:s'),
+                'check_out' => now(),
             ]);
 
-            // Upload photo
+            // Upload photo with today's date in path
             $photoPath = $request->file('photo')->store(
                 "attendance/{$user->id}/" . $today->format('Y-m-d'),
                 'public'
