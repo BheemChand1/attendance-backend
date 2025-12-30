@@ -215,30 +215,36 @@ class AttendanceController extends Controller
             $user = $request->user();
             
             $validated = $request->validate([
-                'from_date' => 'nullable|date',
-                'to_date' => 'nullable|date',
-                'per_page' => 'nullable|integer|min:1|max:100'
+                'month' => 'required|integer|min:1|max:12',
+                'year' => 'required|integer|min:2020|max:2100'
             ]);
 
-            $query = Attendance::where('user_id', $user->id)
-                ->with('photos');
+            $month = $validated['month'];
+            $year = $validated['year'];
 
-            if (isset($validated['from_date'])) {
-                $query->where('date', '>=', $validated['from_date']);
-            }
+            // Get the first and last day of the specified month
+            $startDate = Carbon::create($year, $month, 1)->startOfMonth();
+            $endDate = Carbon::create($year, $month, 1)->endOfMonth();
 
-            if (isset($validated['to_date'])) {
-                $query->where('date', '<=', $validated['to_date']);
-            }
-
-            $perPage = $validated['per_page'] ?? 15;
-            $attendances = $query->orderBy('date', 'desc')->paginate($perPage);
+            $attendances = Attendance::where('user_id', $user->id)
+                ->with('photos')
+                ->whereBetween('date', [$startDate, $endDate])
+                ->orderBy('date', 'desc')
+                ->get();
 
             return response()->json([
                 'status' => true,
-                'data' => $attendances
+                'data' => $attendances,
+                'month' => $month,
+                'year' => $year
             ], 200);
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'status' => false,
+                'errors' => $e->errors()
+            ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Error fetching attendance history',
